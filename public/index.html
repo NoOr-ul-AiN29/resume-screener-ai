@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeIQ | AI Resume Screener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f7f9fc;
+      --surface: #ffffff;
+      --surface-2: #f1f4f9;
+      --border: rgba(0, 0, 0, 0.06);
+      --border-md: rgba(0, 0, 0, 0.12);
+      --text-1: #1a1f2e;
+      --text-2: #4a5568;
+      --text-3: #8a94a6;
+      --blue-bg: #eef4ff;
+      --blue-text: #1a56c4;
+      --blue-border: #b9d0f5;
+      --green-bg: #eafaf1;
+      --green-text: #11734c;
+      --green-border: #a3e0c0;
+      --red-bg: #fee9e9;
+      --red-text: #c0392b;
+      --red-border: #f5c2c2;
+      --amber-bg: #fff5e6;
+      --amber-text: #c47d2b;
+      --amber-border: #f5dcb0;
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e121b;
+        --surface: #171c2a;
+        --surface-2: #1e2538;
+        --border: rgba(255,255,255,0.05);
+        --border-md: rgba(255,255,255,0.1);
+        --text-1: #eceff8;
+        --text-2: #9aa4bf;
+        --text-3: #5f6988;
+        --blue-bg: #0f1e3a;
+        --blue-text: #7aabf7;
+        --blue-border: #1e3a6e;
+        --green-bg: #0a2216;
+        --green-text: #5ecf91;
+        --green-border: #1a4d30;
+        --red-bg: #241111;
+        --red-text: #f07a6a;
+        --red-border: #552222;
+        --amber-bg: #241b0a;
+        --amber-text: #f0b84a;
+        --amber-border: #554010;
+      }
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-1);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* header */
+    .header { margin-bottom: 0.25rem; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--blue-text);
+      background: var(--blue-bg);
+      border: 0.5px solid var(--blue-border);
+      padding: 3px 12px;
+      border-radius: 100px;
+      margin-bottom: 0.9rem;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, var(--text-1) 0%, var(--blue-text) 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .subhead {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-top: 6px;
+    }
+
+    /* card base */
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.3rem 1.6rem;
+      transition: all 0.2s ease;
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* upload zone */
+    .upload-zone {
+      border: 1.5px dashed var(--border-md);
+      border-radius: var(--radius-md);
+      padding: 1.8rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .upload-zone:hover {
+      border-color: var(--blue-text);
+      background: var(--blue-bg);
+      transform: translateY(-1px);
+    }
+    .upload-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+    .upload-title { font-size: 14px; font-weight: 600; color: var(--text-1); }
+    .upload-hint { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+    .file-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--blue-text);
+      background: var(--blue-bg);
+      border: 0.5px solid var(--blue-border);
+      padding: 4px 14px;
+      border-radius: 100px;
+      margin-top: 0.8rem;
+    }
+
+    /* form */
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+      display: block;
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      background: var(--surface-2);
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 1rem;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: var(--text-1);
+      resize: vertical;
+      outline: none;
+      transition: all 0.2s;
+    }
+    textarea:focus {
+      border-color: var(--blue-text);
+      box-shadow: 0 0 0 3px var(--blue-bg);
+    }
+    textarea::placeholder { color: var(--text-3); }
+
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.6rem 1.4rem;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border-md);
+      background: var(--surface);
+      color: var(--text-1);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--surface-2);
+      border-color: var(--border-md);
+      transform: translateY(-1px);
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--text-1);
+      color: var(--surface);
+      border-color: var(--text-1);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--blue-text);
+      border-color: var(--blue-text);
+    }
+
+    /* toast */
+    .toast {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 1rem;
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .toast.show { display: flex; }
+    .toast.error   { background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); }
+    .toast.info    { background: var(--blue-bg); color: var(--blue-text); border: 0.5px solid var(--blue-border); }
+    .toast.success { background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* results area */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 1.25rem;
+    }
+    .metric {
+      background: var(--surface-2);
+      border-radius: var(--radius-md);
+      padding: 1rem 1rem;
+    }
+    .metric-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+    .metric-value.green { color: var(--green-text); }
+    .metric-value.amber { color: var(--amber-text); }
+    .metric-value.red   { color: var(--red-text); }
+    .divider {
+      height: 0.5px;
+      background: var(--border);
+      margin: 0 0 1.25rem;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .skill-group-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .skill-group-label.green { color: var(--green-text); }
+    .skill-group-label.red   { color: var(--red-text); }
+    .skill-group-label.blue  { color: var(--blue-text); }
+    .skill-group-label.muted { color: var(--text-3); }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tag {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 100px;
+      transition: transform 0.1s;
+    }
+    .tag.green { background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
+    .tag.red   { background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); }
+    .tag.blue  { background: var(--blue-bg); color: var(--blue-text); border: 0.5px solid var(--blue-border); }
+    .tag.muted { background: var(--surface-2); color: var(--text-2); border: 0.5px solid var(--border-md); }
+    .empty {
+      font-size: 12px;
+      color: var(--text-3);
+      font-style: italic;
+    }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-3);
+      padding-top: 0.8rem;
+      border-top: 0.5px solid var(--border);
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 560px) {
+      body { padding: 1.2rem 1rem; }
+      .metrics-row { grid-template-columns: 1fr 1fr; }
+      .skills-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+      .card { padding: 1.1rem 1.2rem; }
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="badge">✨ AI · semantic skill match</div>
+    <h1>ResumeIQ Screener</h1>
+    <p class="subhead">Upload a resume (PDF) + paste a job description → instant intelligence on candidate fit.</p>
+  </div>
+
+  <!-- upload card -->
+  <div class="card">
+    <div class="card-label">📎 Resume PDF</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="resumeFileInput" accept=".pdf" style="display:none;" />
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Click or drag PDF</div>
+      <div class="upload-hint">Text-based PDF only · max 20 MB</div>
+    </div>
+    <div id="filePill" class="file-pill">📄 No file selected</div>
+  </div>
+
+  <!-- job description card -->
+  <div class="card">
+    <div class="card-label">📋 Job intelligence</div>
+    <label class="field-label" for="jobDesc">Paste job description</label>
+    <textarea id="jobDesc" placeholder="Paste full job description: responsibilities, required skills, qualifications, experience…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="screenBtn" disabled>
+        🔍 Analyse match
+      </button>
+    </div>
+    <div class="toast" id="statusToast"></div>
+  </div>
+
+  <!-- results card (dynamic) -->
+  <div class="card" id="resultsCard" style="display:none;">
+    <div class="card-label">📊 Match metrics</div>
+
+    <div class="metrics-row">
+      <div class="metric">
+        <div class="metric-label">Overall fit</div>
+        <div class="metric-value" id="metricScore">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Matched skills</div>
+        <div class="metric-value" id="metricCount">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Verdict</div>
+        <div class="metric-value" id="metricLabel" style="font-size:14px; padding-top:5px;">—</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="skills-grid">
+      <div>
+        <div class="skill-group-label green">✓ Matched skills</div>
+        <div class="tags" id="matchedTags"></div>
+      </div>
+      <div>
+        <div class="skill-group-label red">✗ Missing / gaps</div>
+        <div class="tags" id="missingTags"></div>
+      </div>
+      <div style="margin-top:.5rem">
+        <div class="skill-group-label muted">📌 Resume inventory</div>
+        <div class="tags" id="resumeTags"></div>
+      </div>
+      <div style="margin-top:.5rem">
+        <div class="skill-group-label blue">🎯 Job requirements</div>
+        <div class="tags" id="jobTags"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>ResumeIQ · full frontend simulation (mock AI) · ready for production API integration</footer>
+</div>
+
+<script>
+  (function(){
+    // ---------- DOM elements ----------
+    const uploadZone = document.getElementById('uploadZone');
+    const resumeInput = document.getElementById('resumeFileInput');
+    const filePill = document.getElementById('filePill');
+    const jobDescTextarea = document.getElementById('jobDesc');
+    const screenBtn = document.getElementById('screenBtn');
+    const statusToast = document.getElementById('statusToast');
+    const resultsCard = document.getElementById('resultsCard');
+
+    // result fields
+    const metricScoreSpan = document.getElementById('metricScore');
+    const metricCountSpan = document.getElementById('metricCount');
+    const metricLabelSpan = document.getElementById('metricLabel');
+    const matchedContainer = document.getElementById('matchedTags');
+    const missingContainer = document.getElementById('missingTags');
+    const resumeContainer = document.getElementById('resumeTags');
+    const jobContainer = document.getElementById('jobTags');
+
+    let currentFile = null;
+
+    // ---------------- helper utilities ----------------
+    function updateButtonState() {
+      screenBtn.disabled = !(currentFile && jobDescTextarea.value.trim().length > 10);
+    }
+
+    function showToast(message, type) {
+      statusToast.textContent = message;
+      statusToast.className = `toast show ${type}`;
+      setTimeout(() => {
+        if (statusToast.classList.contains('show')) statusToast.classList.remove('show');
+      }, 4500);
+    }
+
+    // style helper for score color
+    function getScoreColor(percentage) {
+      if (percentage >= 70) return 'green';
+      if (percentage >= 40) return 'amber';
+      return 'red';
+    }
+
+    // render skills tags
+    function renderTags(container, skillsArray, cssClass, emptyMessage = '— none —') {
+      if (!skillsArray || skillsArray.length === 0) {
+        container.innerHTML = `<span class="empty">${emptyMessage}</span>`;
+        return;
+      }
+      container.innerHTML = skillsArray
+        .map(skill => `<span class="tag ${cssClass}">${escapeHtml(skill)}</span>`)
+        .join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    // ---------- intelligent mock matching engine (realistic demo) ----------
+    // This simulates an AI extraction. In production, you'd call /screen endpoint.
+    // It dynamically extracts skills from job description + resume text simulation.
+    async function simulateMatching(resumeFile, jobDescription) {
+      return new Promise((resolve) => {
+        // simulate processing delay like real AI
+        setTimeout(() => {
+          // 1) extract mock skills from job description using keyword detection
+          const jobLower = jobDescription.toLowerCase();
+          const commonTech = [
+            'python', 'javascript', 'react', 'angular', 'vue', 'node.js', 'java', 'c++', 'go',
+            'sql', 'mongodb', 'postgresql', 'aws', 'azure', 'docker', 'kubernetes', 'ci/cd',
+            'leadership', 'project management', 'agile', 'scrum', 'communication', 'teamwork',
+            'machine learning', 'data analysis', 'pandas', 'tensorflow', 'pytorch', 'nlp'
+          ];
+          
+          // extract job skills from JD (simple keyword matching)
+          let jobSkills = [];
+          for (let skill of commonTech) {
+            if (jobLower.includes(skill.toLowerCase())) {
+              jobSkills.push(skill);
+            }
+          }
+          // add some default variety if empty
+          if (jobSkills.length === 0) {
+            jobSkills = ['Python', 'SQL', 'Communication', 'Problem Solving', 'Team Collaboration'];
+          }
+          
+          // 2) mock resume skills based on fake extraction (simulate reading file name)
+          // In real scenario we would parse PDF text, but for demo we generate based on file name + seed
+          const fileName = resumeFile.name.toLowerCase();
+          const resumeMockBase = [];
+          if (fileName.includes('engineer') || fileName.includes('dev') || fileName.includes('developer')) {
+            resumeMockBase.push('Python', 'JavaScript', 'React', 'SQL', 'Git', 'Docker');
+          } else if (fileName.includes('data') || fileName.includes('analyst')) {
+            resumeMockBase.push('Python', 'SQL', 'Pandas', 'Statistics', 'Tableau', 'Excel');
+          } else if (fileName.includes('manager') || fileName.includes('lead')) {
+            resumeMockBase.push('Leadership', 'Agile', 'Project Management', 'Stakeholder Management', 'Strategic Planning');
+          } else {
+            resumeMockBase.push('Problem Solving', 'Teamwork', 'MS Office', 'Communication', 'Time Management');
+          }
+          
+          // also add some random overlap from JD
+          let resumeSkills = [...resumeMockBase];
+          for (let js of jobSkills) {
+            if (Math.random() > 0.65 && !resumeSkills.includes(js)) {
+              resumeSkills.push(js);
+            }
+          }
+          resumeSkills = [...new Set(resumeSkills)];
+          
+          // 3) compute matched and missing skills
+          const matched = resumeSkills.filter(skill => jobSkills.some(js => js.toLowerCase() === skill.toLowerCase()));
+          const missing = jobSkills.filter(js => !resumeSkills.some(rs => rs.toLowerCase() === js.toLowerCase()));
+          
+          // 4) match percentage
+          const totalJob = jobSkills.length;
+          const matchedCount = matched.length;
+          const percentage = totalJob === 0 ? 0 : Math.round((matchedCount / totalJob) * 100);
+          
+          // 5) generate label
+          let label = '';
+          if (percentage >= 80) label = 'Excellent Match';
+          else if (percentage >= 60) label = 'Strong Candidate';
+          else if (percentage >= 40) label = 'Partial Fit';
+          else label = 'Low Alignment';
+          
+          resolve({
+            match_percentage: percentage,
+            match_label: label,
+            total_matched: matchedCount,
+            total_job_skills: totalJob,
+            matched_skills: matched,
+            missing_skills: missing,
+            resume_skills: resumeSkills,
+            job_skills: jobSkills
+          });
+        }, 900);
+      });
+    }
+
+    // ---------- file selection handlers ----------
+    function handleFileSelection(file) {
+      if (file && file.type === 'application/pdf') {
+        currentFile = file;
+        const trimmedName = file.name.length > 45 ? file.name.substring(0, 42) + '…' : file.name;
+        filePill.innerHTML = `📄 ${trimmedName}`;
+        filePill.style.cssText = '';
+        showToast('Resume loaded — ready for screening', 'success');
+      } else if (file) {
+        currentFile = null;
+        filePill.innerHTML = '⚠️ PDF required';
+        showToast('Only PDF files are supported for resume analysis.', 'error');
+      } else {
+        currentFile = null;
+        filePill.innerHTML = '📄 No file selected';
+      }
+      updateButtonState();
+    }
+
+    resumeInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      handleFileSelection(file);
+    });
+
+    uploadZone.addEventListener('click', () => resumeInput.click());
+
+    // drag & drop enhancements
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+      uploadZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    ['dragenter', 'dragover'].forEach(ev => {
+      uploadZone.addEventListener(ev, () => {
+        uploadZone.style.borderColor = 'var(--blue-text)';
+        uploadZone.style.background = 'var(--blue-bg)';
+      });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      uploadZone.addEventListener(ev, () => {
+        uploadZone.style.borderColor = '';
+        uploadZone.style.background = '';
+      });
+    });
+    uploadZone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        resumeInput.files = e.dataTransfer.files;
+        handleFileSelection(file);
+      } else {
+        showToast('Please drop a valid PDF document.', 'error');
+      }
+    });
+
+    jobDescTextarea.addEventListener('input', updateButtonState);
+
+    // ---------- main analysis (frontend mock + later API ready) ----------
+    screenBtn.addEventListener('click', async () => {
+      if (!currentFile || !jobDescTextarea.value.trim()) {
+        showToast('Please select a resume PDF and paste a job description.', 'info');
+        return;
+      }
+      
+      // loading UI
+      screenBtn.disabled = true;
+      const originalBtnText = screenBtn.innerHTML;
+      screenBtn.innerHTML = `<span class="spinner"></span> Analysing intelligence...`;
+      resultsCard.style.display = 'none';
+      statusToast.classList.remove('show');
+      
+      try {
+        // ----- SIMULATION MODE (pure frontend) -------
+        // For production, replace with:
+        // const formData = new FormData();
+        // formData.append('resume', currentFile);
+        // formData.append('job_description', jobDescTextarea.value);
+        // const res = await fetch('/screen', { method: 'POST', body: formData });
+        // const data = await res.json();
+        
+        // Using intelligent mock matching (realistic demo)
+        const data = await simulateMatching(currentFile, jobDescTextarea.value);
+        
+        // ----- render results -------
+        const pct = data.match_percentage;
+        const colorClass = getScoreColor(pct);
+        
+        metricScoreSpan.textContent = `${pct}%`;
+        metricScoreSpan.className = `metric-value ${colorClass}`;
+        metricCountSpan.textContent = `${data.total_matched} / ${data.total_job_skills}`;
+        metricLabelSpan.textContent = data.match_label;
+        metricLabelSpan.className = `metric-value ${colorClass}`;
+        
+        renderTags(matchedContainer, data.matched_skills, 'green', 'No overlapping skills');
+        renderTags(missingContainer, data.missing_skills, 'red', 'All required skills matched! 🎉');
+        renderTags(resumeContainer, data.resume_skills, 'muted', 'No skills extracted');
+        renderTags(jobContainer, data.job_skills, 'blue', 'No job skills detected');
+        
+        resultsCard.style.display = 'block';
+        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        showToast('Analysis complete — insights ready', 'success');
+      } catch (err) {
+        console.error(err);
+        showToast(`Screening error: ${err.message}. Please try again.`, 'error');
+      } finally {
+        screenBtn.disabled = false;
+        screenBtn.innerHTML = originalBtnText;
+        updateButtonState();
+      }
+    });
+    
+    // initial state
+    resultsCard.style.display = 'none';
+    updateButtonState();
+  })();
+</script>
+</body>
+</html>
