@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resume Screener AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Header */
+    header { text-align: center; }
+    header h1 { font-size: 2rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.3rem; }
+    header p  { color: #94a3b8; font-size: 0.95rem; }
+
+    /* Card */
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #7dd3fc;
+      margin-bottom: 1rem;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed #334155;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover { border-color: #38bdf8; background: #162032; }
+    .upload-zone input { display: none; }
+    .upload-zone label { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+    .upload-zone .icon { font-size: 2rem; }
+    .upload-zone .hint { color: #64748b; font-size: 0.82rem; }
+    .file-name { margin-top: 0.6rem; font-size: 0.88rem; color: #38bdf8; min-height: 1.2rem; }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      height: 160px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: #38bdf8; }
+    textarea::placeholder { color: #475569; }
+
+    /* Button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.7rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      background: #0ea5e9;
+      color: #fff;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .btn:hover:not(:disabled) { background: #0284c7; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error banner */
+    .error-box {
+      display: none;
+      background: #450a0a;
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 0.9rem;
+      margin-top: 0.75rem;
+    }
+    .error-box.show { display: block; }
+
+    /* Results section */
+    #results { display: none; }
+    #results.show { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Match score card */
+    .score-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .score-label { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; }
+    .score-value { font-size: 3rem; font-weight: 700; color: #38bdf8; line-height: 1; }
+    .score-badge {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #0c2340;
+      color: #7dd3fc;
+      border: 1px solid #0ea5e9;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      background: #0f172a;
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+      transition: width 0.8s ease;
+      width: 0%;
+    }
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.4rem;
+    }
+
+    /* Skills grid */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) { .skills-grid { grid-template-columns: 1fr; } }
+
+    .skills-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+    .skills-box h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .skills-box.matched h3 { color: #4ade80; }
+    .skills-box.missing  h3 { color: #f87171; }
+    .skills-box.resume   h3 { color: #38bdf8; }
+    .skills-box.job      h3 { color: #a78bfa; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .tag {
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+    .tag.green  { background: #14532d; color: #86efac; border: 1px solid #22c55e; }
+    .tag.red    { background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; }
+    .tag.blue   { background: #0c2340; color: #7dd3fc; border: 1px solid #0ea5e9; }
+    .tag.purple { background: #2e1065; color: #c4b5fd; border: 1px solid #7c3aed; }
+    .empty-msg  { font-size: 0.82rem; color: #475569; font-style: italic; }
+
+    footer { color: #334155; font-size: 0.78rem; text-align: center; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🎯 Resume Screener AI</h1>
+    <p>Upload your resume and paste a job description to see how well you match.</p>
+  </header>
+
+  <!-- Input Card -->
+  <div class="card">
+    <h2>📄 Upload Resume & Job Description</h2>
+
+    <!-- PDF Upload -->
+    <div class="upload-zone">
+      <input type="file" id="resumeInput" accept=".pdf"/>
+      <label for="resumeInput">
+        <span class="icon">📁</span>
+        <span>Click to upload your Resume (PDF only)</span>
+        <span class="hint">Only .pdf files are supported</span>
+      </label>
+    </div>
+    <div class="file-name" id="fileName"></div>
+
+    <!-- Job Description -->
+    <div style="margin-top:1.2rem;">
+      <label style="font-size:0.9rem;color:#94a3b8;display:block;margin-bottom:0.5rem;">
+        📋 Paste the Job Description
+      </label>
+      <textarea
+        id="jobDesc"
+        placeholder="e.g. We are looking for a Python developer with experience in FastAPI, PostgreSQL, Docker, REST APIs, and strong communication skills..."
+      ></textarea>
+    </div>
+
+    <button class="btn" id="screenBtn" disabled>
+      🔍 Screen Resume
+    </button>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Score Card -->
+    <div class="score-card">
+      <div class="score-label">Overall Match Score</div>
+      <div class="score-value" id="scoreValue">0%</div>
+      <div class="score-badge" id="scoreBadge">—</div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-stats">
+        <span id="matchedCount">0 skills matched</span>
+        <span id="totalCount">0 required skills</span>
+      </div>
+    </div>
+
+    <!-- Skills Breakdown -->
+    <div class="skills-grid">
+
+      <div class="skills-box matched">
+        <h3>✅ Matched Skills</h3>
+        <div class="tags" id="matchedTags"></div>
+      </div>
+
+      <div class="skills-box missing">
+        <h3>❌ Missing Skills</h3>
+        <div class="tags" id="missingTags"></div>
+      </div>
+
+      <div class="skills-box resume">
+        <h3>📄 Resume Skills</h3>
+        <div class="tags" id="resumeTags"></div>
+      </div>
+
+      <div class="skills-box job">
+        <h3>💼 Job Required Skills</h3>
+        <div class="tags" id="jobTags"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>Resume Screener AI · Nexe-Agent Internship Task</footer>
+</div>
+
+<script>
+  const resumeInput = document.getElementById('resumeInput');
+  const fileName    = document.getElementById('fileName');
+  const jobDesc     = document.getElementById('jobDesc');
+  const screenBtn   = document.getElementById('screenBtn');
+  const errorBox    = document.getElementById('errorBox');
+  const results     = document.getElementById('results');
+
+  // Enable button only when both file and job description are provided
+  function checkReady() {
+    screenBtn.disabled = !(resumeInput.files.length > 0 && jobDesc.value.trim());
+  }
+
+  resumeInput.addEventListener('change', () => {
+    const file = resumeInput.files[0];
+    fileName.textContent = file ? `Selected: ${file.name}` : '';
+    checkReady();
+  });
+
+  jobDesc.addEventListener('input', checkReady);
+
+  // -----------------------------------------------------------------------
+  // Screen button click
+  // -----------------------------------------------------------------------
+  screenBtn.addEventListener('click', async () => {
+    const file = resumeInput.files[0];
+    const jd   = jobDesc.value.trim();
+
+    if (!file || !jd) return;
+
+    // Loading state
+    screenBtn.disabled = true;
+    screenBtn.innerHTML = '<span class="spinner"></span> Screening…';
+    errorBox.classList.remove('show');
+    results.classList.remove('show');
+
+    const formData = new FormData();
+    formData.append('resume', file);
+    formData.append('job_description', jd);
+
+    try {
+      const res  = await fetch('/screen', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.detail || 'Something went wrong. Please try again.');
+        return;
+      }
+
+      renderResults(data);
+
+    } catch (err) {
+      showError(`Network error: ${err.message}`);
+    } finally {
+      screenBtn.disabled = false;
+      screenBtn.innerHTML = '🔍 Screen Resume';
+    }
+  });
+
+  // -----------------------------------------------------------------------
+  // Render results
+  // -----------------------------------------------------------------------
+  function renderResults(data) {
+    // Score
+    document.getElementById('scoreValue').textContent  = `${data.match_percentage}%`;
+    document.getElementById('scoreBadge').textContent  = data.match_label;
+    document.getElementById('progressBar').style.width = `${data.match_percentage}%`;
+    document.getElementById('matchedCount').textContent = `${data.total_matched} skills matched`;
+    document.getElementById('totalCount').textContent   = `${data.total_job_skills} required skills`;
+
+    // Tags
+    renderTags('matchedTags', data.matched_skills, 'green');
+    renderTags('missingTags', data.missing_skills,  'red');
+    renderTags('resumeTags',  data.resume_skills,   'blue');
+    renderTags('jobTags',     data.job_skills,       'purple');
+
+    results.classList.add('show');
+
+    // Smooth scroll to results
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderTags(containerId, skills, colorClass) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    if (!skills || skills.length === 0) {
+      container.innerHTML = '<span class="empty-msg">None found</span>';
+      return;
+    }
+
+    skills.forEach(skill => {
+      const tag = document.createElement('span');
+      tag.className = `tag ${colorClass}`;
+      tag.textContent = skill;
+      container.appendChild(tag);
+    });
+  }
+
+  function showError(msg) {
+    errorBox.textContent = `❌ ${msg}`;
+    errorBox.classList.add('show');
+  }
+</script>
+</body>
+</html>
